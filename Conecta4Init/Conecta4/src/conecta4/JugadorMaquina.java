@@ -12,21 +12,28 @@ package conecta4;
 public class JugadorMaquina extends Jugador{
 
     //Profundidad hasta la que se va a desarrollar el árbol de juego
-    public final static int NIVEL_DEFECTO = 2;
+    public static int NIVEL_DEFECTO = 7;
     
     public final static int MIN = 1;
     public final static int MAX = 2;
+    
+    public static int nodos;
+    public static int mejorMaxValue;
 
     //Constructor
     public JugadorMaquina(int jugador) {
         super(jugador);
+        nodos = 0;
+        mejorMaxValue = NIVEL_DEFECTO;
     }
 
     // Función que se ejecuta en el thread
     public void run() {
+        NIVEL_DEFECTO = Interfaz.nivel+1;
+        System.out.println(NIVEL_DEFECTO);
         //Llama a la función Minimax que implementa el algoritmo para calcular la jugada
         minimax();
-        
+
         //No borrar esta línea!!
         isDone(true);
     }
@@ -39,19 +46,37 @@ public class JugadorMaquina extends Jugador{
      * @return
      */
     public void minimax() {
+        boolean jugadaLibro = false;
         int max = Integer.MIN_VALUE;
         int mejorColumna = -1;
-        /* 
+        int hijoActual = 0;
+        int profundidad = NIVEL_DEFECTO;
+         /* 
         Necesitamos generar la jugada raíz para poder hacer
         el cálculo de los sucesores.
         */
-        for (int i = 0; i < m_tablero.numColumnas(); i++) {
+        
+        for (int i = 0; i < m_tablero.numColumnas() && !jugadaLibro; i++) {
             Tablero hijo = new Tablero(m_tablero);
             if (hijo.ponerFicha(i, MAX) == 0) {
-                int hijoActual = minimaxRecursivo(hijo, MIN, 1);
-                if (hijoActual > max) {
-                    mejorColumna = i;
-                    max = hijoActual;
+                if (cuentaFichas(hijo) <= 3 && i == 3) {
+                    mejorColumna = jugadaDeLibroInicial(hijo);
+                    jugadaLibro = true;
+                }
+                else {
+                    if (Interfaz.seleccion)
+                        hijoActual = alfaBeta(hijo, MIN, 1, Integer.MIN_VALUE, Integer.MAX_VALUE);
+                    else           
+                        hijoActual = minimaxRecursivo(hijo, MIN, 1);
+                    if (hijoActual == Integer.MAX_VALUE && mejorMaxValue < profundidad) {
+                        mejorColumna = i;
+                        max = hijoActual;
+                        profundidad = mejorMaxValue;
+                    }
+                    else if (hijoActual > max) {
+                        mejorColumna = i;
+                        max = hijoActual;
+                    }
                 }
             }
         }
@@ -69,15 +94,63 @@ public class JugadorMaquina extends Jugador{
             else
                 columna =  (int) (Math.random()*m_tablero.numColumnas());
         }
+        System.out.println("Se han generado " + nodos + " nodos" );
      }
     
-    private int minimaxRecursivo(Tablero tablero, int jugador, int profundidad) {
+    private int alfaBeta(Tablero tablero, int jugador, int profundidad, int alfa, int beta) {
+        nodos++;
         int puntuacionActual = 0;
         if (!tablero.tableroLleno()) {
-            if (tablero.cuatroEnRaya() == MAX) 
+            if (tablero.cuatroEnRaya() == MAX) {
+                if (profundidad == 1)
+                    mejorMaxValue = profundidad;  
                 return Integer.MAX_VALUE;
+            }
             else if (tablero.cuatroEnRaya() == MIN)
-                return Integer.MIN_VALUE+1;
+                return Integer.MIN_VALUE;
+            else if (profundidad == NIVEL_DEFECTO)
+                return heuristica(tablero);
+            else {
+                if (jugador == MAX)
+                    puntuacionActual = Integer.MIN_VALUE;
+                else
+                    puntuacionActual = Integer.MAX_VALUE;
+                for (int i = 0; i < tablero.numColumnas(); i++) {
+                    Tablero hijo = new Tablero(tablero);
+                    if (hijo.ponerFicha(i, jugador) == 0) {
+                        if (jugador == MAX) {
+                            alfa = Math.max(alfa, alfaBeta(hijo, MIN, profundidad + 1, alfa, beta));
+                            if (alfa >= beta)
+                                return beta;
+                            puntuacionActual = alfa;
+                        }
+                        else {
+                            beta = Math.min(beta, alfaBeta(hijo, MAX, profundidad + 1, alfa, beta));
+                            if (alfa >= beta)
+                                return alfa;
+                            puntuacionActual = beta;
+                        }
+                    }
+                }
+                return puntuacionActual;
+            }
+        }
+        else {
+            return 0;
+        }
+    }
+    
+    private int minimaxRecursivo(Tablero tablero, int jugador, int profundidad) {
+        nodos++;
+        int puntuacionActual = 0;
+        if (!tablero.tableroLleno()) {
+            if (tablero.cuatroEnRaya() == MAX) {
+                if (profundidad == 1)
+                    mejorMaxValue = profundidad;  
+                return Integer.MAX_VALUE;
+            }
+            else if (tablero.cuatroEnRaya() == MIN)
+                return Integer.MIN_VALUE;
             else if (profundidad == NIVEL_DEFECTO)
                 return heuristica(tablero);
             else {
@@ -104,37 +177,24 @@ public class JugadorMaquina extends Jugador{
  
     private int heuristica(Tablero tablero) {
         int jugador, total = 0;
-        if (jugadaDeLibroInicial(tablero)) {
-            if (tablero.obtenerCasilla(0, 3) == MAX)
-                total += 10; 
-            else {
-                 if (tablero.obtenerCasilla(0, 2) == MAX ||
-                     tablero.obtenerCasilla(1, 3) == MIN ||
-                     tablero.obtenerCasilla(0, 4) == MAX)
-                     total += 7;
-            }
-        }
-        else {
-            for (int i = 0; i < tablero.numFilas(); i++) {
-                for (int j = 0; j < tablero.numColumnas(); j++) {
-                    int puntos = 0;
-                    jugador = tablero.obtenerCasilla(i, j);
-                    if (jugador == 0)
-                        jugador = MAX;
+        
+        for (int i = 0; i < tablero.numFilas(); i++) {
+            for (int j = 0; j < tablero.numColumnas(); j++) {
+                int puntos = 0;
+                jugador = tablero.obtenerCasilla(i, j);
+                if (jugador != 0) {
                     puntos += comprobarHorizontalDerecha(i, j, jugador, tablero);
-                    puntos += comprobarHorizontalIzquierda(i, j, jugador, tablero);
+                    //puntos += comprobarHorizontalIzquierda(i, j, jugador, tablero);
                     puntos += comprobarVerticalArriba(i, j, jugador, tablero);
-                    puntos += comprobarVerticalAbajo(i, j, jugador, tablero);
+                    //puntos += comprobarVerticalAbajo(i, j, jugador, tablero);
                     puntos += comprobarDiagonalDerechaArriba(i, j, jugador, tablero);
                     puntos += comprobarDiagonalIzquierdaArriba(i, j, jugador, tablero);
                     puntos += comprobarDiagonalDerechaAbajo(i, j, jugador, tablero);
                     puntos += comprobarDiagonalIzquierdaAbajo(i, j, jugador, tablero);
-                    if (tablero.obtenerCasilla(i, j) == 0)
-                        puntos /= 4;
-                    if (jugador == MIN)
-                        puntos = -puntos;
-                    total += puntos;
                 }
+                if (jugador == MIN)
+                    puntos = -puntos;
+                total = total + puntos;
             }
         }
         return total;
@@ -147,40 +207,40 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i, j+1) == jugador &&
                 tablero.obtenerCasilla(i, j+2) == jugador &&
                 tablero.obtenerCasilla(i, j+3) == 0) {
-                contador += 3;
+                contador += 20;
             }
             if (tablero.obtenerCasilla(i, j+1) == jugador &&
                 tablero.obtenerCasilla(i, j+2) == 0 &&
                 tablero.obtenerCasilla(i, j+3) == jugador) {
-                contador += 3;
+                contador += 20;
             }
             if (tablero.obtenerCasilla(i, j+1) == 0 &&
                 tablero.obtenerCasilla(i, j+2) == jugador &&
                 tablero.obtenerCasilla(i, j+3) == jugador) {
-                contador += 3;
+                contador += 20;
             }
             // Comprobamos todas las posibilidades de 2 en raya.
             if (tablero.obtenerCasilla(i, j+1) == jugador &&
                 tablero.obtenerCasilla(i, j+2) == 0 &&
                 tablero.obtenerCasilla(i, j+3) == 0) {
-                contador += 2;
+                contador += 10;
             }
             if (tablero.obtenerCasilla(i, j+1) == 0 &&
                 tablero.obtenerCasilla(i, j+2) == 0 &&
                 tablero.obtenerCasilla(i, j+3) == jugador) {
-                contador += 2;
+                contador += 10;
             }
             if (tablero.obtenerCasilla(i, j+1) == 0 &&
                 tablero.obtenerCasilla(i, j+2) == jugador &&
                 tablero.obtenerCasilla(i, j+3) == 0) {
-                contador += 2;
+                contador += 10;
             }
             // Comprobamos la posibilidad del 1 en raya
             if (tablero.obtenerCasilla(i, j+1) == 0 &&
                 tablero.obtenerCasilla(i, j+2) == 0 &&
                 tablero.obtenerCasilla(i, j+3) == 0 &&
                 tablero.obtenerCasilla(i, j) != 0) {
-                contador += 1;
+                contador += 5;
             }
         }
         return contador;
@@ -193,40 +253,40 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i, j-1) == jugador &&
                 tablero.obtenerCasilla(i, j-2) == jugador &&
                 tablero.obtenerCasilla(i, j-3) == 0) {
-                contador += 3;
+                contador += 20;
             }
             if (tablero.obtenerCasilla(i, j-1) == jugador &&
                 tablero.obtenerCasilla(i, j-2) == 0 &&
                 tablero.obtenerCasilla(i, j-3) == jugador) {
-                contador += 3;
+                contador += 20;
             }
             if (tablero.obtenerCasilla(i, j-1) == 0 &&
                 tablero.obtenerCasilla(i, j-2) == jugador &&
                 tablero.obtenerCasilla(i, j-3) == jugador) {
-                contador += 3;
+                contador += 20;
             }
             // Comprobamos todas las posibilidades de 2 en raya.
             if (tablero.obtenerCasilla(i, j-1) == jugador &&
                 tablero.obtenerCasilla(i, j-2) == 0 &&
                 tablero.obtenerCasilla(i, j-3) == 0) {
-                contador += 2;
+                contador += 10;
             }
             if (tablero.obtenerCasilla(i, j-1) == 0 &&
                 tablero.obtenerCasilla(i, j-2) == 0 &&
                 tablero.obtenerCasilla(i, j-3) == jugador) {
-                contador += 2;
+                contador += 10;
             }
             if (tablero.obtenerCasilla(i, j-1) == 0 &&
                 tablero.obtenerCasilla(i, j-2) == jugador &&
                 tablero.obtenerCasilla(i, j-3) == 0) {
-                contador += 2;
+                contador += 10;
             }
             // Comprobamos la posibilidad del 1 en raya
             if (tablero.obtenerCasilla(i, j-1) == 0 &&
                 tablero.obtenerCasilla(i, j-2) == 0 &&
                 tablero.obtenerCasilla(i, j-3) == 0 &&
                 tablero.obtenerCasilla(i, j) != 0) {
-                contador += 1;
+                contador += 5;
             }
         }
         return contador;
@@ -239,40 +299,40 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i+1, j) == jugador &&
                 tablero.obtenerCasilla(i+2, j) == jugador &&
                 tablero.obtenerCasilla(i+3, j) == 0) {
-                contador += 3;
+                contador += 20;
             }
             if (tablero.obtenerCasilla(i+1, j) == jugador &&
                 tablero.obtenerCasilla(i+2, j) == 0 &&
                 tablero.obtenerCasilla(i+3, j) == jugador) {
-                contador += 3;
+                contador += 20;
             }
             if (tablero.obtenerCasilla(i+1, j) == 0 &&
                 tablero.obtenerCasilla(i+2, j) == jugador &&
                 tablero.obtenerCasilla(i+3, j) == jugador) {
-                contador += 3;
+                contador += 20;
             }
             // Comprobamos todas las posibilidades de 2 en raya.
             if (tablero.obtenerCasilla(i+1, j) == 0 &&
                 tablero.obtenerCasilla(i+2, j) == jugador &&
                 tablero.obtenerCasilla(i+3, j) == 0) {
-                contador += 2;
+                contador += 10;
             }
             if (tablero.obtenerCasilla(i+1, j) == 0 &&
                 tablero.obtenerCasilla(i+2, j) == 0 &&
                 tablero.obtenerCasilla(i+3, j) == jugador) {
-                contador += 2;
+                contador += 10;
             }
             if (tablero.obtenerCasilla(i+1, j) == jugador &&
                 tablero.obtenerCasilla(i+2, j) == 0 &&
                 tablero.obtenerCasilla(i+3, j) == 0) {
-                contador += 2;
+                contador += 10;
             }
             // Comprobamos la posibilidad del 1 en raya
             if (tablero.obtenerCasilla(i+1, j) == 0 &&
                 tablero.obtenerCasilla(i+2, j) == 0 &&
                 tablero.obtenerCasilla(i+3, j) == 0 &&
                 tablero.obtenerCasilla(i, j) != 0) {
-                contador += 1;
+                contador += 5;
             }
         }
         return contador;
@@ -285,40 +345,40 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i-1, j) == jugador &&
                 tablero.obtenerCasilla(i-2, j) == jugador &&
                 tablero.obtenerCasilla(i-3, j) == 0) {
-                contador += 3;
+                contador += 20;
             }
             if (tablero.obtenerCasilla(i-1, j) == jugador &&
                 tablero.obtenerCasilla(i-2, j) == 0 &&
                 tablero.obtenerCasilla(i-3, j) == jugador) {
-                contador += 3;
+                contador += 20;
             }
             if (tablero.obtenerCasilla(i-1, j) == 0 &&
                 tablero.obtenerCasilla(i-2, j) == jugador &&
                 tablero.obtenerCasilla(i-3, j) == jugador) {
-                contador += 3;
+                contador += 20;
             }
             // Comprobamos todas las posibilidades de 2 en raya.
             if (tablero.obtenerCasilla(i-1, j) == 0 &&
                 tablero.obtenerCasilla(i-2, j) == jugador &&
                 tablero.obtenerCasilla(i-3, j) == 0) {
-                contador += 2;
+                contador += 10;
             }
             if (tablero.obtenerCasilla(i-1, j) == 0 &&
                 tablero.obtenerCasilla(i-2, j) == 0 &&
                 tablero.obtenerCasilla(i-3, j) == jugador) {
-                contador += 2;
+                contador += 10;
             }
             if (tablero.obtenerCasilla(i-1, j) == jugador &&
                 tablero.obtenerCasilla(i-2, j) == 0 &&
                 tablero.obtenerCasilla(i-3, j) == 0) {
-                contador += 2;
+                contador += 10;
             }
             // Comprobamos la posibilidad del 1 en raya
             if (tablero.obtenerCasilla(i-1, j) == 0 &&
                 tablero.obtenerCasilla(i-2, j) == 0 &&
                 tablero.obtenerCasilla(i-3, j) == 0 &&
                 tablero.obtenerCasilla(i, j) != 0) {
-                contador += 1;
+                contador += 5;
             }
         }
         return contador;
@@ -330,40 +390,40 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i+1, j+1) == jugador &&
                 tablero.obtenerCasilla(i+2, j+2) == jugador &&
                 tablero.obtenerCasilla(i+3, j+3) == 0) {
-                contador += 3;
+                contador += 20;
             }
             if (tablero.obtenerCasilla(i+1, j+1) == jugador &&
                 tablero.obtenerCasilla(i+2, j+2) == 0 &&
                 tablero.obtenerCasilla(i+3, j+3) == jugador) {
-                contador += 3;
+                contador += 20;
             }
             if (tablero.obtenerCasilla(i+1, j+1) == 0 &&
                 tablero.obtenerCasilla(i+2, j+2) == jugador &&
                 tablero.obtenerCasilla(i+3, j+3) == jugador) {
-                contador += 3;
+                contador += 20;
             }
             
             if (tablero.obtenerCasilla(i+1, j+1) == 0 &&
                 tablero.obtenerCasilla(i+2, j+2) == 0 &&
                 tablero.obtenerCasilla(i+3, j+3) == jugador) {
-                contador += 2;
+                contador += 10;
             }
             if (tablero.obtenerCasilla(i+1, j+1) == 0 &&
                 tablero.obtenerCasilla(i+2, j+2) == jugador &&
                 tablero.obtenerCasilla(i+3, j+3) == 0) {
-                contador += 2;
+                contador += 10;
             }
             if (tablero.obtenerCasilla(i+1, j+1) == jugador &&
                 tablero.obtenerCasilla(i+2, j+2) == 0 &&
                 tablero.obtenerCasilla(i+3, j+3) == 0) {
-                contador += 2;
+                contador += 10;
             }
             
             if (tablero.obtenerCasilla(i+1, j+1) == 0 &&
                 tablero.obtenerCasilla(i+2, j+2) == 0 &&
                 tablero.obtenerCasilla(i+3, j+3) == 0 &&
                 tablero.obtenerCasilla(i, j) != 0) {
-                contador += 1;
+                contador += 5;
             }
         }
         return contador;
@@ -375,40 +435,40 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i+1, j-1) == jugador &&
                 tablero.obtenerCasilla(i+2, j-2) == jugador &&
                 tablero.obtenerCasilla(i+3, j-3) == 0) {
-                contador += 3;
+                contador += 20;
             }
             if (tablero.obtenerCasilla(i+1, j-1) == jugador &&
                 tablero.obtenerCasilla(i+2, j-2) == 0 &&
                 tablero.obtenerCasilla(i+3, j-3) == jugador) {
-                contador += 3;
+                contador += 20;
             }
             if (tablero.obtenerCasilla(i+1, j-1) == 0 &&
                 tablero.obtenerCasilla(i+2, j-2) == jugador &&
                 tablero.obtenerCasilla(i+3, j-3) == jugador) {
-                contador += 3;
+                contador += 20;
             }
             
             if (tablero.obtenerCasilla(i+1, j-1) == 0 &&
                 tablero.obtenerCasilla(i+2, j-2) == 0 &&
                 tablero.obtenerCasilla(i+3, j-3) == jugador) {
-                contador += 2;
+                contador += 10;
             }
             if (tablero.obtenerCasilla(i+1, j-1) == 0 &&
                 tablero.obtenerCasilla(i+2, j-2) == jugador &&
                 tablero.obtenerCasilla(i+3, j-3) == 0) {
-                contador += 2;
+                contador += 10;
             }
             if (tablero.obtenerCasilla(i+1, j-1) == jugador &&
                 tablero.obtenerCasilla(i+2, j-2) == 0 &&
                 tablero.obtenerCasilla(i+3, j-3) == 0) {
-                contador += 2;
+                contador += 10;
             }
             
             if (tablero.obtenerCasilla(i+1, j-1) == 0 &&
                 tablero.obtenerCasilla(i+2, j-2) == 0 &&
                 tablero.obtenerCasilla(i+3, j-3) == 0 &&
                 tablero.obtenerCasilla(i, j) != 0) {
-                contador += 1;
+                contador += 5;
             }
         }
         return contador;
@@ -420,40 +480,40 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i-1, j+1) == jugador &&
                 tablero.obtenerCasilla(i-2, j+2) == jugador &&
                 tablero.obtenerCasilla(i-3, j+3) == 0) {
-                contador += 3;
+                contador += 20;
             }
             if (tablero.obtenerCasilla(i-1, j+1) == jugador &&
                 tablero.obtenerCasilla(i-2, j+2) == 0 &&
                 tablero.obtenerCasilla(i-3, j+3) == jugador) {
-                contador += 3;
+                contador += 20;
             }
             if (tablero.obtenerCasilla(i-1, j+1) == 0 &&
                 tablero.obtenerCasilla(i-2, j+2) == jugador &&
                 tablero.obtenerCasilla(i-3, j+3) == jugador) {
-                contador += 3;
+                contador += 20;
             }
             
             if (tablero.obtenerCasilla(i-1, j+1) == 0 &&
                 tablero.obtenerCasilla(i-2, j+2) == 0 &&
                 tablero.obtenerCasilla(i-3, j+3) == jugador) {
-                contador += 2;
+                contador += 10;
             }
             if (tablero.obtenerCasilla(i-1, j+1) == 0 &&
                 tablero.obtenerCasilla(i-2, j+2) == jugador &&
                 tablero.obtenerCasilla(i-3, j+3) == 0) {
-                contador += 2;
+                contador += 10;
             }
             if (tablero.obtenerCasilla(i-1, j+1) == jugador &&
                 tablero.obtenerCasilla(i-2, j+2) == 0 &&
                 tablero.obtenerCasilla(i-3, j+3) == 0) {
-                contador += 2;
+                contador += 10;
             }
             
             if (tablero.obtenerCasilla(i-1, j+1) == 0 &&
                 tablero.obtenerCasilla(i-2, j+2) == 0 &&
                 tablero.obtenerCasilla(i-3, j+3) == 0 &&
                 tablero.obtenerCasilla(i, j) != 0) {
-                contador += 1;
+                contador += 5;
             }
         }
         return contador;
@@ -465,56 +525,64 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i-1, j-1) == jugador &&
                 tablero.obtenerCasilla(i-2, j-2) == jugador &&
                 tablero.obtenerCasilla(i-3, j-3) == 0) {
-                contador += 3;
+                contador += 20;
             }
             if (tablero.obtenerCasilla(i-1, j-1) == jugador &&
                 tablero.obtenerCasilla(i-2, j-2) == 0 &&
                 tablero.obtenerCasilla(i-3, j-3) == jugador) {
-                contador += 3;
+                contador += 20;
             }
             if (tablero.obtenerCasilla(i-1, j-1) == 0 &&
                 tablero.obtenerCasilla(i-2, j-2) == jugador &&
                 tablero.obtenerCasilla(i-3, j-3) == jugador) {
-                contador += 3;
+                contador += 20;
             }
             
             if (tablero.obtenerCasilla(i-1, j-1) == 0 &&
                 tablero.obtenerCasilla(i-2, j-2) == 0 &&
                 tablero.obtenerCasilla(i-3, j-3) == jugador) {
-                contador += 2;
+                contador += 10;
             }
             if (tablero.obtenerCasilla(i-1, j-1) == 0 &&
                 tablero.obtenerCasilla(i-2, j-2) == jugador &&
                 tablero.obtenerCasilla(i-3, j-3) == 0) {
-                contador += 2;
+                contador += 10;
             }
             if (tablero.obtenerCasilla(i-1, j-1) == jugador &&
                 tablero.obtenerCasilla(i-2, j-2) == 0 &&
                 tablero.obtenerCasilla(i-3, j-3) == 0) {
-                contador += 2;
+                contador += 10;
             }
             
             if (tablero.obtenerCasilla(i-1, j-1) == 0 &&
                 tablero.obtenerCasilla(i-2, j-2) == 0 &&
                 tablero.obtenerCasilla(i-3, j-3) == 0 &&
                 tablero.obtenerCasilla(i, j) != 0) {
-                contador += 1;
+                contador += 5;
             }
         }
         return contador;
     }
     
-    private boolean jugadaDeLibroInicial(Tablero tablero) {
+    private int jugadaDeLibroInicial(Tablero tablero) {
+        if (tablero.obtenerCasilla(0, 3) == MAX && tablero.obtenerCasilla(1, 3) != MIN)
+            return 3;
+        else {
+            if (tablero.obtenerCasilla(0, 3) == MIN)
+                return 3;
+            return 2;
+        }
+    }
+    
+    private int cuentaFichas(Tablero tablero) {
         int contador = 0;
         for (int i = 0; i < tablero.numFilas(); i++) {
             for (int j = 0; j < tablero.numColumnas(); j++) {
-                if (tablero.obtenerCasilla(i, j) != 0)
-                    contador++;
+                if (tablero.existeFicha(i, j))
+                    contador++;      
             }
         }
-        if (contador <= 10)
-            return true;
-        return false;
+        return contador;
     }
 }
 

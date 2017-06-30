@@ -43,7 +43,9 @@ public class Interfaz extends javax.swing.JFrame {
         jButtonHH = new javax.swing.JButton();
         jButtonHM = new javax.swing.JButton();
         jButtonMM = new javax.swing.JButton();
-        jComboBox1 = new javax.swing.JComboBox<>();
+        alphaBeta = new javax.swing.JComboBox<>();
+        jLabel2 = new javax.swing.JLabel();
+        niveles = new javax.swing.JComboBox<>();
         jMenuBar2 = new javax.swing.JMenuBar();
         jMenu2 = new javax.swing.JMenu();
         jMenuItem2 = new javax.swing.JMenuItem();
@@ -71,7 +73,7 @@ public class Interfaz extends javax.swing.JFrame {
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 346, Short.MAX_VALUE)
+            .add(0, 362, Short.MAX_VALUE)
         );
 
         jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 14)); // NOI18N
@@ -103,10 +105,21 @@ public class Interfaz extends javax.swing.JFrame {
             }
         });
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Minimax", "Alpha-Beta" }));
-        jComboBox1.addActionListener(new java.awt.event.ActionListener() {
+        alphaBeta.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Minimax", "Alpha-Beta" }));
+        alphaBeta.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jComboBox1ActionPerformed(evt);
+                alphaBetaActionPerformed(evt);
+            }
+        });
+
+        jLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 14)); // NOI18N
+        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel2.setText("Selecciona nivel de predicción");
+
+        niveles.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "2", "3", "4", "5", "6", "7", "8" }));
+        niveles.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                nivelesActionPerformed(evt);
             }
         });
 
@@ -146,9 +159,15 @@ public class Interfaz extends javax.swing.JFrame {
                                 .add(jLabel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 255, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(jComboBox1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(jButtonMM))))
+                            .add(jButtonMM)
+                            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                                .add(org.jdesktop.layout.GroupLayout.LEADING, niveles, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .add(org.jdesktop.layout.GroupLayout.LEADING, alphaBeta, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
                 .addContainerGap())
+            .add(layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jLabel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 255, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -160,8 +179,12 @@ public class Interfaz extends javax.swing.JFrame {
                 .add(12, 12, 12)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel1)
-                    .add(jComboBox1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .add(28, 28, 28)
+                    .add(alphaBeta, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(4, 4, 4)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel2)
+                    .add(niveles, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
@@ -334,9 +357,45 @@ public class Interfaz extends javax.swing.JFrame {
         jButtonMM.setEnabled(true);
     }//GEN-LAST:event_jMenuItem1ActionPerformed
 
-    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jComboBox1ActionPerformed
+    private void alphaBetaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_alphaBetaActionPerformed
+        int eleccion = alphaBeta.getSelectedIndex();
+        
+        if (eleccion == 0 && seleccion)
+            seleccion = false;
+        else if (eleccion == 1 && !seleccion)
+            seleccion = true;
+    }//GEN-LAST:event_alphaBetaActionPerformed
+
+    private void nivelesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nivelesActionPerformed
+        int eleccion = niveles.getSelectedIndex();
+        
+        switch (eleccion) {
+            case 0:
+                nivel = 1;
+                break;
+            case 1:
+                nivel = 2;
+                break;
+            case 2:
+                nivel = 3;
+                break;
+            case 3:
+                nivel = 4;
+                break;
+            case 4:
+                nivel = 5;
+                break;
+            case 5:
+                nivel = 6;
+                break;
+            case 6:
+                nivel = 7;
+                break;
+            case 7:
+                nivel = 8;
+                break;
+        }
+    }//GEN-LAST:event_nivelesActionPerformed
 
 
     /**
@@ -351,17 +410,20 @@ public class Interfaz extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    public static javax.swing.JComboBox<String> alphaBeta;
     private javax.swing.JButton jButtonHH;
     private javax.swing.JButton jButtonHM;
     private javax.swing.JButton jButtonMM;
-    public static javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar2;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JComboBox<String> niveles;
     // End of variables declaration//GEN-END:variables
-
+    public static boolean seleccion = false;
+    public static int nivel = 2;
 
     //Dibuja el tablero de juego.
     @Override
