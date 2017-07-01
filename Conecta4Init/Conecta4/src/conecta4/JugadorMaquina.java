@@ -12,7 +12,7 @@ package conecta4;
 public class JugadorMaquina extends Jugador{
 
     //Profundidad hasta la que se va a desarrollar el árbol de juego
-    public static int NIVEL_DEFECTO = 7;
+    public static int NIVEL_DEFECTO = 2;
     
     public final static int MIN = 1;
     public final static int MAX = 2;
@@ -30,10 +30,8 @@ public class JugadorMaquina extends Jugador{
     // Función que se ejecuta en el thread
     public void run() {
         NIVEL_DEFECTO = Interfaz.nivel+1;
-        System.out.println(NIVEL_DEFECTO);
         //Llama a la función Minimax que implementa el algoritmo para calcular la jugada
         minimax();
-
         //No borrar esta línea!!
         isDone(true);
     }
@@ -59,7 +57,7 @@ public class JugadorMaquina extends Jugador{
         for (int i = 0; i < m_tablero.numColumnas() && !jugadaLibro; i++) {
             Tablero hijo = new Tablero(m_tablero);
             if (hijo.ponerFicha(i, MAX) == 0) {
-                if (cuentaFichas(hijo) <= 3 && i == 3) {
+                if (cuentaFichas(hijo) <= 2) {
                     mejorColumna = jugadaDeLibroInicial(hijo);
                     jugadaLibro = true;
                 }
@@ -94,12 +92,13 @@ public class JugadorMaquina extends Jugador{
             else
                 columna =  (int) (Math.random()*m_tablero.numColumnas());
         }
-        System.out.println("Se han generado " + nodos + " nodos" );
+        // Muestra por pantalla los nodos generados de la tirada
+        //System.out.println("Se han generado " + nodos + " nodos" ); 
      }
     
     private int alfaBeta(Tablero tablero, int jugador, int profundidad, int alfa, int beta) {
-        nodos++;
         int puntuacionActual = 0;
+        nodos++;
         if (!tablero.tableroLleno()) {
             if (tablero.cuatroEnRaya() == MAX) {
                 if (profundidad == 1)
@@ -141,8 +140,8 @@ public class JugadorMaquina extends Jugador{
     }
     
     private int minimaxRecursivo(Tablero tablero, int jugador, int profundidad) {
-        nodos++;
         int puntuacionActual = 0;
+        nodos++;
         if (!tablero.tableroLleno()) {
             if (tablero.cuatroEnRaya() == MAX) {
                 if (profundidad == 1)
@@ -212,7 +211,7 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i, j+1) == jugador &&
                 tablero.obtenerCasilla(i, j+2) == 0 &&
                 tablero.obtenerCasilla(i, j+3) == jugador) {
-                contador += 20;
+                contador += 15;
             }
             if (tablero.obtenerCasilla(i, j+1) == 0 &&
                 tablero.obtenerCasilla(i, j+2) == jugador &&
@@ -223,7 +222,7 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i, j+1) == jugador &&
                 tablero.obtenerCasilla(i, j+2) == 0 &&
                 tablero.obtenerCasilla(i, j+3) == 0) {
-                contador += 10;
+                contador += 8;
             }
             if (tablero.obtenerCasilla(i, j+1) == 0 &&
                 tablero.obtenerCasilla(i, j+2) == 0 &&
@@ -258,7 +257,7 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i, j-1) == jugador &&
                 tablero.obtenerCasilla(i, j-2) == 0 &&
                 tablero.obtenerCasilla(i, j-3) == jugador) {
-                contador += 20;
+                contador += 15;
             }
             if (tablero.obtenerCasilla(i, j-1) == 0 &&
                 tablero.obtenerCasilla(i, j-2) == jugador &&
@@ -269,7 +268,7 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i, j-1) == jugador &&
                 tablero.obtenerCasilla(i, j-2) == 0 &&
                 tablero.obtenerCasilla(i, j-3) == 0) {
-                contador += 10;
+                contador += 8;
             }
             if (tablero.obtenerCasilla(i, j-1) == 0 &&
                 tablero.obtenerCasilla(i, j-2) == 0 &&
@@ -304,7 +303,7 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i+1, j) == jugador &&
                 tablero.obtenerCasilla(i+2, j) == 0 &&
                 tablero.obtenerCasilla(i+3, j) == jugador) {
-                contador += 20;
+                contador += 15;
             }
             if (tablero.obtenerCasilla(i+1, j) == 0 &&
                 tablero.obtenerCasilla(i+2, j) == jugador &&
@@ -315,7 +314,7 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i+1, j) == 0 &&
                 tablero.obtenerCasilla(i+2, j) == jugador &&
                 tablero.obtenerCasilla(i+3, j) == 0) {
-                contador += 10;
+                contador += 8;
             }
             if (tablero.obtenerCasilla(i+1, j) == 0 &&
                 tablero.obtenerCasilla(i+2, j) == 0 &&
@@ -350,7 +349,7 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i-1, j) == jugador &&
                 tablero.obtenerCasilla(i-2, j) == 0 &&
                 tablero.obtenerCasilla(i-3, j) == jugador) {
-                contador += 20;
+                contador += 15;
             }
             if (tablero.obtenerCasilla(i-1, j) == 0 &&
                 tablero.obtenerCasilla(i-2, j) == jugador &&
@@ -361,7 +360,7 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i-1, j) == 0 &&
                 tablero.obtenerCasilla(i-2, j) == jugador &&
                 tablero.obtenerCasilla(i-3, j) == 0) {
-                contador += 10;
+                contador += 8;
             }
             if (tablero.obtenerCasilla(i-1, j) == 0 &&
                 tablero.obtenerCasilla(i-2, j) == 0 &&
@@ -395,7 +394,7 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i+1, j+1) == jugador &&
                 tablero.obtenerCasilla(i+2, j+2) == 0 &&
                 tablero.obtenerCasilla(i+3, j+3) == jugador) {
-                contador += 20;
+                contador += 15;
             }
             if (tablero.obtenerCasilla(i+1, j+1) == 0 &&
                 tablero.obtenerCasilla(i+2, j+2) == jugador &&
@@ -406,7 +405,7 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i+1, j+1) == 0 &&
                 tablero.obtenerCasilla(i+2, j+2) == 0 &&
                 tablero.obtenerCasilla(i+3, j+3) == jugador) {
-                contador += 10;
+                contador += 8;
             }
             if (tablero.obtenerCasilla(i+1, j+1) == 0 &&
                 tablero.obtenerCasilla(i+2, j+2) == jugador &&
@@ -440,7 +439,7 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i+1, j-1) == jugador &&
                 tablero.obtenerCasilla(i+2, j-2) == 0 &&
                 tablero.obtenerCasilla(i+3, j-3) == jugador) {
-                contador += 20;
+                contador += 15;
             }
             if (tablero.obtenerCasilla(i+1, j-1) == 0 &&
                 tablero.obtenerCasilla(i+2, j-2) == jugador &&
@@ -451,7 +450,7 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i+1, j-1) == 0 &&
                 tablero.obtenerCasilla(i+2, j-2) == 0 &&
                 tablero.obtenerCasilla(i+3, j-3) == jugador) {
-                contador += 10;
+                contador += 8;
             }
             if (tablero.obtenerCasilla(i+1, j-1) == 0 &&
                 tablero.obtenerCasilla(i+2, j-2) == jugador &&
@@ -485,7 +484,7 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i-1, j+1) == jugador &&
                 tablero.obtenerCasilla(i-2, j+2) == 0 &&
                 tablero.obtenerCasilla(i-3, j+3) == jugador) {
-                contador += 20;
+                contador += 15;
             }
             if (tablero.obtenerCasilla(i-1, j+1) == 0 &&
                 tablero.obtenerCasilla(i-2, j+2) == jugador &&
@@ -496,7 +495,7 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i-1, j+1) == 0 &&
                 tablero.obtenerCasilla(i-2, j+2) == 0 &&
                 tablero.obtenerCasilla(i-3, j+3) == jugador) {
-                contador += 10;
+                contador += 8;
             }
             if (tablero.obtenerCasilla(i-1, j+1) == 0 &&
                 tablero.obtenerCasilla(i-2, j+2) == jugador &&
@@ -530,7 +529,7 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i-1, j-1) == jugador &&
                 tablero.obtenerCasilla(i-2, j-2) == 0 &&
                 tablero.obtenerCasilla(i-3, j-3) == jugador) {
-                contador += 20;
+                contador += 15;
             }
             if (tablero.obtenerCasilla(i-1, j-1) == 0 &&
                 tablero.obtenerCasilla(i-2, j-2) == jugador &&
@@ -541,7 +540,7 @@ public class JugadorMaquina extends Jugador{
             if (tablero.obtenerCasilla(i-1, j-1) == 0 &&
                 tablero.obtenerCasilla(i-2, j-2) == 0 &&
                 tablero.obtenerCasilla(i-3, j-3) == jugador) {
-                contador += 10;
+                contador += 8;
             }
             if (tablero.obtenerCasilla(i-1, j-1) == 0 &&
                 tablero.obtenerCasilla(i-2, j-2) == jugador &&
@@ -565,13 +564,10 @@ public class JugadorMaquina extends Jugador{
     }
     
     private int jugadaDeLibroInicial(Tablero tablero) {
-        if (tablero.obtenerCasilla(0, 3) == MAX && tablero.obtenerCasilla(1, 3) != MIN)
-            return 3;
-        else {
-            if (tablero.obtenerCasilla(0, 3) == MIN)
-                return 3;
+        if (tablero.obtenerCasilla(0, 3) == MIN)
             return 2;
-        }
+        else
+            return 3;
     }
     
     private int cuentaFichas(Tablero tablero) {
